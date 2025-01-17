@@ -1,23 +1,85 @@
-import { verifyToken, generateToken } from "authenticator";
+import { generateToken } from "authenticator";
 import { Router } from "express";
 import { client } from "@repo/db/client";
 import jwt from "jsonwebtoken";
-import { JWT_PASSWORD } from "../config";
+import { JWT_PASSWORD, TOTP_SECRET } from "../config";
 import { sendMessage } from "../../utils/twilio";
+import { getToken, verifyToken } from "../../utils/totp";
 const router: Router = Router();
+
 router.post("/signup", async (req, res) => {
   const number = req.body.number;
-  const otp = generateToken(number + "SIGNUP");
-  client.user.upsert({
+  const otp = getToken(number, "Auth");
+
+  try {
+    const user = await client.user.upsert({
+      where: {
+        number,
+      },
+      create: {
+        number,
+        name: "",
+      },
+      update: {},
+    });
+  } catch (error: any) {
+    console.error(error.message);
+    res.status(500).json({
+      messgae: "server error",
+    });
+  }
+  if (process.env.NODE_ENV === "production") {
+    try {
+      await sendMessage(
+        `+91 ${number}`,
+        `Your otp for logging into latent is ${otp}`
+      );
+    } catch (error: any) {
+      console.error(error.message);
+    }
+  }
+
+  res.json({
+    message: "message sent",
+  });
+});
+
+router.post("/signup/verify", async (req, res) => {
+  const { number, name, otp } = req.body;
+  if (
+    process.env.NODE_ENV === "production" &&
+    !verifyToken(number, "Auth", otp)
+  ) {
+    res.json({
+      message: "Invalid token",
+    });
+    return;
+  }
+  const user = await client.user.update({
     where: {
       number,
     },
-
-    create: {
-      number,
+    data: {
+      name,
+      verified: true,
     },
-    update: {},
   });
+
+  const token = jwt.sign(
+    {
+      userId: user.id,
+    },
+    JWT_PASSWORD
+  );
+  res.json({
+    token,
+  });
+});
+
+router.post("/signin", async (req, res) => {
+  const number = req.body.number;
+  const otp = generateToken(number + "SIGNUP");
+
   if (process.env.NODE_ENV == "production") {
     try {
       await sendMessage(
@@ -30,35 +92,32 @@ router.post("/signup", async (req, res) => {
   }
 
   res.json({
-    id: otp,
+    message: "otp sent",
   });
 });
 
-router.post("/signup/verify", async (req, res) => {
-  const number = req.body.number;
-  const name = req.body.name;
-  if (!verifyToken(number + "SIGNUP", req.body.otp)) {
+router.post("/signin/verify", async (req, res) => {
+  const { number, otp } = req.body;
+  if (!verifyToken(number + "SIGNUP", otp)) {
     res.json({
       message: "Invalid token",
     });
     return;
   }
-  const userId = await client.user.update({
+  const user = await client.user.findFirstOrThrow({
     where: {
       number,
-    },
-    data: {
-      name,
-      verified: true,
     },
   });
 
   const token = jwt.sign(
     {
-      userId,
+      userId: user.id,
     },
     JWT_PASSWORD
   );
-  res.json({});
+  res.json({
+    token,
+  });
 });
 export default router;

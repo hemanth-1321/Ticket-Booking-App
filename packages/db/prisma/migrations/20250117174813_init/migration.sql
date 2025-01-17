@@ -5,7 +5,7 @@ CREATE TYPE "PaymentState" AS ENUM ('Success', 'Fail', 'Pending');
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
     "number" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
+    "name" TEXT NOT NULL DEFAULT '',
     "verified" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
@@ -17,6 +17,7 @@ CREATE TABLE "Admin" (
     "number" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "verified" BOOLEAN NOT NULL DEFAULT false,
+    "eventId" TEXT NOT NULL,
 
     CONSTRAINT "Admin_pkey" PRIMARY KEY ("id")
 );
@@ -25,7 +26,7 @@ CREATE TABLE "Admin" (
 CREATE TABLE "Event" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "desciprtion" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
     "banner" TEXT NOT NULL,
     "adminId" TEXT NOT NULL,
 
@@ -56,7 +57,7 @@ CREATE TABLE "SeatType" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "event" TEXT NOT NULL,
+    "eventId" TEXT NOT NULL,
     "price" INTEGER NOT NULL,
 
     CONSTRAINT "SeatType_pkey" PRIMARY KEY ("id")
@@ -88,10 +89,10 @@ ALTER TABLE "Booking" ADD CONSTRAINT "Booking_eventId_fkey" FOREIGN KEY ("eventI
 ALTER TABLE "Booking" ADD CONSTRAINT "Booking_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Seat" ADD CONSTRAINT "Seat_seatTypeId_fkey" FOREIGN KEY ("seatTypeId") REFERENCES "SeatType"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Seat" ADD CONSTRAINT "Seat_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "Booking"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Seat" ADD CONSTRAINT "Seat_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "Booking"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Seat" ADD CONSTRAINT "Seat_seatTypeId_fkey" FOREIGN KEY ("seatTypeId") REFERENCES "SeatType"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Payment" ADD CONSTRAINT "Payment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

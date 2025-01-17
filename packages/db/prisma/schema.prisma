@@ -14,94 +14,78 @@ datasource db {
 }
 
 model User {
-  id        String    @id      @default(uuid())
-  number    String    @unique
-  name      String
-  verified  Boolean   @default(false)
-  bookings  Booking[]
-  payments  Payment[]
+  id       String    @id @default(uuid())
+  number   String    @unique
+  name     String    @default("")
+  verified Boolean   @default(false)
+  booking  Booking[]
+  Payment  Payment[]
 }
 
 model Admin {
-  id        String    @id      @default(uuid())
-  number    String    @unique
-  name      String    @default("")
-  verified  Boolean   @default(false)
-  events    Event[]
-  type      AdminType
+  id       String  @id @default(uuid())
+  number   String  @unique
+  name     String
+  verified Boolean @default(false)
+
+  events  Event[]
+  eventId String
 }
 
 model Event {
-  id                String    @id      @default(uuid())
-  name              String
-  desciprtion       String
-  banner            String
-  adminId           String
-  admin             Admin     @relation(fields: [adminId], references: [id])
-  seatTypes         SeatType[]
-  bookings          Booking[]
-  payments          Payment[]
-  locationId        String
-  startTime         DateTime
-  published         Boolean   @default(false)
-  ended             Boolean   @default(false)
-  location          Location  @relation(fields: [locationId], references: [id])
+  id          String @id @default(uuid())
+  name        String
+  description String
+  banner      String
+
+  adminId String
+  admin   Admin     @relation(fields: [adminId], references: [id])
+  bokings Booking[]
+  Payment Payment[]
 }
 
 model Booking {
-  id                String    @id      @default(uuid())
-  eventId           String
-  userId            String
-  event             Event     @relation(fields: [eventId], references: [id])
-  user              User      @relation(fields: [userId], references: [id])
-  seats             Seat[]
+  id String @id @default(uuid())
+
+  eventId String
+  userId  String
+
+  event Event  @relation(fields: [eventId], references: [id])
+  user  User   @relation(fields: [userId], references: [id])
+  seats Seat[]
 }
 
 model Seat {
-  id                String    @id      @default(uuid())
-  seatTypeId        String
-  bookingId         String
-  qr                String
-  seatType          SeatType  @relation(fields: [seatTypeId], references: [id])
-  booking           Booking  @relation(fields: [bookingId], references: [id])
+  id         String @id @default(uuid())
+  seatTypeId String
+  bookingId  String
+
+  qr       String
+  booking  Booking  @relation(fields: [bookingId], references: [id])
+  seatType SeatType @relation(fields: [seatTypeId], references: [id])
 }
 
 model SeatType {
-  id                String    @id      @default(uuid())
-  name              String
-  description       String
-  eventId           String
-  price             Int
-  seats             Seat[]
-  capacity          Int
-  filled            Int     @default(0)
-  event             Event   @relation(fields: [eventId], references: [id])
+  id          String @id @default(uuid())
+  name        String
+  description String
+  eventId     String
+  price       Int
+  seats       Seat[]
 }
 
 model Payment {
-  id                String    @id      @default(uuid())
-  eventId           String
-  userId            String
-  status            PaymentState
-  user              User @relation(fields: [userId], references: [id])
-  event             Event @relation(fields: [eventId], references: [id])
-}
+  id String @id @default(uuid())
 
-model Location {
-  id                String    @id      @default(uuid())
-  name              String
-  description       String
-  imageUrl          String
-  event             Event[]
+  eventId String
+  userId  String
+  status  PaymentState
+  user    User         @relation(fields: [userId], references: [id])
+  event   Event        @relation(fields: [eventId], references: [id])
 }
 
 enum PaymentState {
   Success
   Fail
   Pending
-}
-
-enum AdminType {
-  SuperAdmin
-  Creator
 }
