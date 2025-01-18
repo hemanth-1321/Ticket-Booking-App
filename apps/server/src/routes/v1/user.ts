@@ -78,7 +78,7 @@ router.post("/signup/verify", async (req, res) => {
 
 router.post("/signin", async (req, res) => {
   const number = req.body.number;
-  const otp = generateToken(number + "SIGNUP");
+  const otp = generateToken(number + "AUTH");
 
   if (process.env.NODE_ENV == "production") {
     try {
@@ -95,27 +95,34 @@ router.post("/signin", async (req, res) => {
     message: "otp sent",
   });
 });
-
-router.post("/signin/verify", async (req, res) => {
-  const { number, otp } = req.body;
-  if (!verifyToken(number + "SIGNUP", otp)) {
+router.post("/signup/verify", async (req, res) => {
+  const number = req.body.phoneNumber;
+  const name = req.body.name;
+  const otp = req.body.otp;
+  if (!!verifyToken(number, "Auth", otp)) {
     res.json({
       message: "Invalid token",
     });
     return;
   }
-  const user = await client.user.findFirstOrThrow({
+
+  const userId = await client.user.update({
     where: {
       number,
+    },
+    data: {
+      name,
+      verified: true,
     },
   });
 
   const token = jwt.sign(
     {
-      userId: user.id,
+      userId,
     },
     JWT_PASSWORD
   );
+
   res.json({
     token,
   });
