@@ -71,6 +71,7 @@ router.post("/signup/verify", async (req, res) => {
     },
     JWT_PASSWORD
   );
+
   res.json({
     token,
   });
@@ -80,22 +81,38 @@ router.post("/signin", async (req, res) => {
   const number = req.body.number;
   const otp = generateToken(number + "AUTH");
 
-  if (process.env.NODE_ENV == "production") {
-    try {
-      await sendMessage(
-        `+91 ${number}`,
-        `Your otp for logging into latent is ${otp}`
-      );
-    } catch (error: any) {
-      console.error(error.message);
-    }
-  }
+  try {
+    const user = await client.user.findFirstOrThrow({
+      where: {
+        number,
+      },
+    });
 
-  res.json({
-    message: "otp sent",
-  });
+    if (process.env.NODE_ENV == "production") {
+      try {
+        await sendMessage(
+          `+91 ${number}`,
+          `Your otp for logging into latent is ${otp}`
+        );
+      } catch (error: any) {
+        console.error(error.message);
+        res.status(500).json({
+          message: "Could not send otp",
+        });
+      }
+    }
+
+    res.json({
+      message: "otp sent",
+    });
+  } catch (error) {
+    res.status(411).json({
+      message: "User invalid",
+    });
+  }
 });
-router.post("/signup/verify", async (req, res) => {
+
+router.post("/signip/verify", async (req, res) => {
   const number = req.body.phoneNumber;
   const name = req.body.name;
   const otp = req.body.otp;

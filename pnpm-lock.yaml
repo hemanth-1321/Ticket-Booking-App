@@ -175,6 +175,9 @@ importers:
         specifier: ^1.7.9
         version: 1.7.9
     devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
       vitest:
         specifier: ^3.0.1
         version: 3.0.1(@types/node@20.17.6)

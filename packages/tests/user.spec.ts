@@ -1,9 +1,9 @@
 import { describe, expect, test, it } from "vitest";
-import axios from "axios";
+import { axios } from "./axios";
 
 const BACKEND_URL = "http://localhost:8080";
 
-const PHONE_NUMBER_1 = "7060334001";
+const PHONE_NUMBER_1 = "7349096614";
 const NAME_1 = "harkirat";
 
 describe("User Signup endpoints", () => {
