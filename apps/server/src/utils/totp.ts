@@ -1,10 +1,10 @@
 import { generateToken, verifyToken as verifyTokenLib } from "authenticator";
 import { TOTP_SECRET } from "../routes/config";
-
-export function getToken(number: string, type: "Auth") {
+type TokenType = "AUTH" | "ADMIN_AUTH";
+export function getToken(number: string, type: TokenType) {
   const otp = generateToken(number + type + TOTP_SECRET);
 }
 
-export function verifyToken(number: string, type: "Auth", otp: string) {
+export function verifyToken(number: string, type: TokenType, otp: string) {
   return verifyTokenLib(number + type + TOTP_SECRET, otp);
 }

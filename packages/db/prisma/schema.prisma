@@ -28,20 +28,22 @@ model Admin {
   name     String
   verified Boolean @default(false)
 
-  events  Event[]
-  eventId String
+  events Event[]
+  type   AdminType
 }
 
 model Event {
-  id          String @id @default(uuid())
+  id          String    @id @default(uuid())
   name        String
   description String
   banner      String
-
-  adminId String
-  admin   Admin     @relation(fields: [adminId], references: [id])
-  bokings Booking[]
-  Payment Payment[]
+  startTime   DateTime
+  adminId     String
+  admin       Admin     @relation(fields: [adminId], references: [id])
+  bokings     Booking[]
+  Payment     Payment[]
+  LocationId  String
+  location    Location  @relation(fields: [LocationId], references: [id])
 }
 
 model Booking {
@@ -74,6 +76,15 @@ model SeatType {
   seats       Seat[]
 }
 
+model Location {
+  id          String @id @default(uuid())
+  name        String
+  description String
+  imageUrl    String
+
+  Event Event[]
+}
+
 model Payment {
   id String @id @default(uuid())
 
@@ -88,4 +99,9 @@ enum PaymentState {
   Success
   Fail
   Pending
+}
+
+enum AdminType {
+  SuperAdmin
+  Creator
 }

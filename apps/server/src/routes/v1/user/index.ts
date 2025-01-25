@@ -2,14 +2,14 @@ import { generateToken } from "authenticator";
 import { Router } from "express";
 import { client } from "@repo/db/client";
 import jwt from "jsonwebtoken";
-import { JWT_PASSWORD, TOTP_SECRET } from "../config";
-import { sendMessage } from "../../utils/twilio";
-import { getToken, verifyToken } from "../../utils/totp";
+import { JWT_PASSWORD, TOTP_SECRET } from "../../config";
+import { sendMessage } from "../../../utils/twilio";
+import { getToken, verifyToken } from "../../../utils/totp";
 const router: Router = Router();
 
 router.post("/signup", async (req, res) => {
   const number = req.body.number;
-  const otp = getToken(number, "Auth");
+  const otp = getToken(number, "AUTH");
 
   try {
     const user = await client.user.upsert({
@@ -48,7 +48,7 @@ router.post("/signup/verify", async (req, res) => {
   const { number, name, otp } = req.body;
   if (
     process.env.NODE_ENV === "production" &&
-    !verifyToken(number, "Auth", otp)
+    !verifyToken(number, "AUTH", otp)
   ) {
     res.json({
       message: "Invalid token",
@@ -112,11 +112,11 @@ router.post("/signin", async (req, res) => {
   }
 });
 
-router.post("/signip/verify", async (req, res) => {
+router.post("/signin/verify", async (req, res) => {
   const number = req.body.phoneNumber;
   const name = req.body.name;
   const otp = req.body.otp;
-  if (!!verifyToken(number, "Auth", otp)) {
+  if (!!verifyToken(number, "AUTH", otp)) {
     res.json({
       message: "Invalid token",
     });

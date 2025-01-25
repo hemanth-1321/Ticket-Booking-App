@@ -1,6 +1,6 @@
 import express, { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
-
+import "./types";
 dotenv.config();
 import v1Router from "./routes/v1";
 const app = express();
