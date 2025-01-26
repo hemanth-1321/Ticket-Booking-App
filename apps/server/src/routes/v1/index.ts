@@ -3,6 +3,7 @@ import userRouter from "./user";
 import adminRouter from "./admin/admin";
 import adminEventRouter from "./admin/events";
 import adminLocationRouter from "./admin/location";
+import testRouter from "../test/index";
 const router: Router = Router();
 router.use("/user", userRouter);
 router.use("/admin", adminRouter);

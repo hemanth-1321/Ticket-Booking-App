@@ -20,3 +20,5 @@ router.post("/create-admin", async (req, res) => {
     token,
   });
 });
+
+export default router;

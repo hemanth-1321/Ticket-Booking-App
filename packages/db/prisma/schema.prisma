@@ -33,17 +33,20 @@ model Admin {
 }
 
 model Event {
-  id          String    @id @default(uuid())
+  id          String     @id @default(uuid())
   name        String
   description String
   banner      String
   startTime   DateTime
   adminId     String
-  admin       Admin     @relation(fields: [adminId], references: [id])
+  admin       Admin      @relation(fields: [adminId], references: [id])
   bokings     Booking[]
   Payment     Payment[]
+  published   Boolean    @default(false)
+  ended       Boolean    @default(false)
   LocationId  String
-  location    Location  @relation(fields: [LocationId], references: [id])
+  location    Location   @relation(fields: [LocationId], references: [id])
+  SeatType    SeatType[]
 }
 
 model Booking {
@@ -74,6 +77,9 @@ model SeatType {
   eventId     String
   price       Int
   seats       Seat[]
+  capacity    Int
+  filled      Int    @default(0)
+  event       Event  @relation(fields: [eventId], references: [id])
 }
 
 model Location {
