@@ -28,7 +28,7 @@ router.post("/signup", async (req, res) => {
       messgae: "server error",
     });
   }
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV !== "production") {
     try {
       await sendMessage(
         `+91 ${number}`,
@@ -45,9 +45,13 @@ router.post("/signup", async (req, res) => {
 });
 
 router.post("/signup/verify", async (req, res) => {
-  const { number, name, otp } = req.body;
+  const number = req.body.number;
+  const name = req.body.name;
+  const otp = req.body.otp;
+
+  console.log(number, name, otp);
   if (
-    process.env.NODE_ENV === "production" &&
+    process.env.NODE_ENV !== "production" &&
     !verifyToken(number, "AUTH", otp)
   ) {
     res.json({

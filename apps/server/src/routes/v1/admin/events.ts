@@ -1,13 +1,21 @@
 import { client } from "@repo/db/client";
 import { Router } from "express";
 import { adminMiddleware } from "../../../middleware/admin";
-import { CreateEventSchema, UpdateEventSchema } from "@repo/common/types";
+import {
+  CreateEventSchema,
+  UpdateEventSchema,
+  UpdateSeatSchema,
+} from "../../../types";
 import { getEvent } from "../../../controllers/events";
 const router: Router = Router();
 
 router.post("/", adminMiddleware, async (req, res) => {
-  const { data, success } = CreateEventSchema.safeParse(req.body);
+  const { data, success, error } = CreateEventSchema.safeParse(req.body);
   const adminId = req.userId;
+
+  // console.log("Validation Success:", success);
+  // console.log("Parsed Data:", data);
+  // console.log("Validation Errors:", error);
 
   if (!adminId) {
     res.status(401).json({
@@ -24,7 +32,7 @@ router.post("/", adminMiddleware, async (req, res) => {
   }
 
   try {
-    const event = client.event.create({
+    const event = await client.event.create({
       data: {
         name: data.name,
         description: data.description,
@@ -32,14 +40,23 @@ router.post("/", adminMiddleware, async (req, res) => {
         LocationId: data.location,
         banner: data.banner,
         adminId,
+        SeatType: {
+          create: data.seats.map((seat) => ({
+            name: seat.name,
+            description: seat.description,
+            capacity: seat.capacity,
+            price: seat.price,
+          })),
+        },
       },
     });
-    res.json({
-      event,
-    });
+    console.log("event", event);
+    res.status(201).json({ event });
   } catch (error) {
+    console.log(error);
     res.status(500).json({
       message: "Could not create event",
+      error,
     });
   }
 });
@@ -118,5 +135,99 @@ router.get("/:eventId", adminMiddleware, async (req, res) => {
     return;
   }
   res.json({ event });
+});
+
+router.put("/seats/eventId", adminMiddleware, async (req, res) => {
+  const { data, success } = UpdateSeatSchema.safeParse(req.body);
+
+  const adminId = req.userId;
+  const eventId = req.params.eventId ?? "";
+  if (!success) {
+    res.status(400).json({
+      message: "Invalid data",
+    });
+    return;
+  }
+
+  if (!adminId) {
+    res.status(402).json({
+      message: "Unauthorized",
+    });
+    return;
+  }
+
+  if (!eventId) {
+    res.status(400).json({
+      message: "Invalid data",
+    });
+
+    return;
+  }
+  const event = await client.event.findUnique({
+    where: {
+      id: eventId,
+      adminId,
+    },
+  });
+  if (!event || event.startTime > new Date() || adminId !== adminId) {
+    res.status(404).json({
+      message: "Event not found or Event already started",
+    });
+  }
+
+  const currentSeats = await client.seatType.findMany({
+    where: {
+      eventId: eventId,
+    },
+  });
+
+  const newSeats = data.seats.filter((x) => !x.id); //returns seats without id so that new seats can be created
+  const updateSeats = data.seats.filter(
+    (x) => x.id && currentSeats.find((y) => y.id === x.id)
+  );
+  const deletedSeats = currentSeats.filter(
+    (x) => !data.seats.find((y) => y.id === x.id)
+  );
+
+  try {
+    await client.$transaction([
+      client.seatType.deleteMany({
+        where: {
+          id: {
+            in: deletedSeats.map((x) => x.id),
+          },
+        },
+      }),
+      client.seatType.createMany({
+        data: newSeats.map((x) => ({
+          name: x.name,
+          description: x.description,
+          price: x.price,
+          capacity: x.capacity,
+          eventId,
+        })),
+      }),
+      ...updateSeats.map((x) =>
+        client.seatType.update({
+          where: {
+            id: x.id,
+          },
+          data: {
+            name: x.name,
+            description: x.description,
+            price: x.price,
+            capacity: x.capacity,
+          },
+        })
+      ),
+    ]);
+  } catch (error) {
+    res.status(500).json({
+      message: "Could not update seats",
+    });
+  }
+  res.json({
+    message: "seats updates",
+  });
 });
 export default router;

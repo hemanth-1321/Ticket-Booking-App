@@ -7,12 +7,19 @@ export function getEvent(eventId: string, adminId?: string) {
         id: eventId,
         adminId: adminId,
       },
+
+      include: {
+        SeatType: true,
+      },
     });
   }
 
   return client.event.findUnique({
     where: {
       id: eventId,
+    },
+    include: {
+      SeatType: true,
     },
   });
 }

@@ -44,7 +44,7 @@ model Event {
   Payment     Payment[]
   published   Boolean    @default(false)
   ended       Boolean    @default(false)
-  LocationId  String
+  LocationId  String     @default("here")
   location    Location   @relation(fields: [LocationId], references: [id])
   SeatType    SeatType[]
 }
@@ -92,8 +92,7 @@ model Location {
 }
 
 model Payment {
-  id String @id @default(uuid())
-
+  id      String       @id @default(uuid())
   eventId String
   userId  String
   status  PaymentState

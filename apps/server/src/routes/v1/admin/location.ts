@@ -2,13 +2,24 @@ import { Router } from "express";
 import { client } from "@repo/db/client";
 
 import { adminMiddleware } from "../../../middleware/admin";
-import { CreateLocationSchema } from "@repo/common/types";
+import { CreateLocationSchema } from "../../../types";
 import { superAdminMiddleware } from "../../../middleware/superAdmin";
 
 const router: Router = Router();
 
-router.post("/", superAdminMiddleware, async (req, res) => {
-  const { data, success } = CreateLocationSchema.safeParse(req.body);
+router.post("/", adminMiddleware, async (req, res) => {
+  const { data, success, error } = CreateLocationSchema.safeParse(req.body);
+
+  console.log("Parsed Data:", data);
+  console.log("Validation Errors:", error);
+  const adminId = req.userId;
+  if (!adminId) {
+    res.status(401).json({
+      messsage: "Unauthorized",
+    });
+
+    return;
+  }
 
   if (!success) {
     res.status(400).json({
@@ -21,12 +32,12 @@ router.post("/", superAdminMiddleware, async (req, res) => {
     const location = await client.location.create({
       data: {
         name: data.name,
-        description: data.desciption,
+        description: data.description,
         imageUrl: data.imageUrl,
       },
     });
 
-    res.json({
+    res.status(201).json({
       id: location.id,
     });
   } catch (error) {

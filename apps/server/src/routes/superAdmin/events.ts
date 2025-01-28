@@ -1,7 +1,7 @@
 import { client } from "@repo/db/client";
 import { Router } from "express";
 import { superAdminMiddleware } from "../../middleware/superAdmin";
-import { UpdateEventSchema } from "@repo/common/types";
+import { UpdateEventSchema } from "../../types";
 
 const router: Router = Router();
 

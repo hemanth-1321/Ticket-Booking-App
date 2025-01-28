@@ -8,14 +8,21 @@ import { getToken, verifyToken } from "../../../utils/totp";
 const router: Router = Router();
 
 router.post("/signin", async (req, res) => {
-  const number = req.body.number;
+  const { number, name } = req.body;
+
   const otp = generateToken(number + "ADMIN_AUTH");
 
   try {
-    const user = await client.admin.findFirstOrThrow({
+    const admin = await client.admin.upsert({
       where: {
         number,
       },
+      create: {
+        number,
+        name,
+        type: "Creator",
+      },
+      update: {},
     });
 
     if (process.env.NODE_ENV == "production") {
@@ -34,44 +41,55 @@ router.post("/signin", async (req, res) => {
 
     res.json({
       message: "otp sent",
+      admin,
     });
-  } catch (error) {
+  } catch (error: any) {
+    console.log(error.message);
     res.status(411).json({
       message: "User invalid",
+      error,
     });
   }
 });
 
 router.post("/signin/verify", async (req, res) => {
-  const number = req.body.phoneNumber;
-  const name = req.body.name;
+  const number = req.body.number;
+
   const otp = req.body.otp;
-  if (!!verifyToken(number, "ADMIN_AUTH", otp)) {
-    res.json({
-      message: "Invalid token",
+  try {
+    if (
+      process.env.NODE_ENV !== "production" &&
+      !verifyToken(number, "ADMIN_AUTH", otp)
+    ) {
+      res.json({
+        message: "Invalid token",
+      });
+      return;
+    }
+    const user = await client.admin.update({
+      where: {
+        number,
+      },
+      data: {
+        verified: true,
+      },
     });
-    return;
+
+    const token = jwt.sign(
+      {
+        userId: user.id,
+      },
+      ADMIN_JWT_PASSWORD
+    );
+
+    res.json({
+      token,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "verification failed",
+    });
   }
-
-  const user = await client.user.update({
-    where: {
-      number,
-    },
-    data: {
-      name,
-      verified: true,
-    },
-  });
-
-  const token = jwt.sign(
-    {
-      userId: user.id,
-    },
-    ADMIN_JWT_PASSWORD
-  );
-
-  res.json({
-    token,
-  });
 });
 export default router;
