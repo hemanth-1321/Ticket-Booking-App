@@ -1,5 +1,6 @@
 import { client } from "@repo/db/client";
 import { Router } from "express";
+import { Request, Response } from "express";
 import { adminMiddleware } from "../../../middleware/admin";
 import {
   CreateEventSchema,
@@ -37,7 +38,7 @@ router.post("/", adminMiddleware, async (req, res) => {
         name: data.name,
         description: data.description,
         startTime: data.startTime,
-        LocationId: data.location,
+        LocationId: data.locationId,
         banner: data.banner,
         adminId,
         SeatType: {
@@ -121,6 +122,9 @@ router.get("/", adminMiddleware, async (req, res) => {
     where: {
       adminId: req.userId,
     },
+    include: {
+      SeatType: true,
+    },
   });
   res.json({
     events,
@@ -137,97 +141,107 @@ router.get("/:eventId", adminMiddleware, async (req, res) => {
   res.json({ event });
 });
 
-router.put("/seats/eventId", adminMiddleware, async (req, res) => {
-  const { data, success } = UpdateSeatSchema.safeParse(req.body);
+router.put(
+  "/seats/:eventId",
+  adminMiddleware,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { data, success } = UpdateSeatSchema.safeParse(req.body);
+      const adminId = req.userId;
+      const eventId = req.params.eventId ?? "";
 
-  const adminId = req.userId;
-  const eventId = req.params.eventId ?? "";
-  if (!success) {
-    res.status(400).json({
-      message: "Invalid data",
-    });
-    return;
-  }
+      if (!success) {
+        res.status(400).json({
+          message: "Invalid data",
+        });
+        return;
+      }
 
-  if (!adminId) {
-    res.status(402).json({
-      message: "Unauthorized",
-    });
-    return;
-  }
+      if (!adminId) {
+        res.status(402).json({
+          message: "Unauthorized",
+        });
+        return;
+      }
 
-  if (!eventId) {
-    res.status(400).json({
-      message: "Invalid data",
-    });
+      if (!eventId) {
+        res.status(400).json({
+          message: "Invalid data",
+        });
+        return;
+      }
 
-    return;
-  }
-  const event = await client.event.findUnique({
-    where: {
-      id: eventId,
-      adminId,
-    },
-  });
-  if (!event || event.startTime > new Date() || adminId !== adminId) {
-    res.status(404).json({
-      message: "Event not found or Event already started",
-    });
-  }
-
-  const currentSeats = await client.seatType.findMany({
-    where: {
-      eventId: eventId,
-    },
-  });
-
-  const newSeats = data.seats.filter((x) => !x.id); //returns seats without id so that new seats can be created
-  const updateSeats = data.seats.filter(
-    (x) => x.id && currentSeats.find((y) => y.id === x.id)
-  );
-  const deletedSeats = currentSeats.filter(
-    (x) => !data.seats.find((y) => y.id === x.id)
-  );
-
-  try {
-    await client.$transaction([
-      client.seatType.deleteMany({
+      const event = await client.event.findUnique({
         where: {
-          id: {
-            in: deletedSeats.map((x) => x.id),
-          },
+          id: eventId,
+          adminId,
         },
-      }),
-      client.seatType.createMany({
-        data: newSeats.map((x) => ({
-          name: x.name,
-          description: x.description,
-          price: x.price,
-          capacity: x.capacity,
-          eventId,
-        })),
-      }),
-      ...updateSeats.map((x) =>
-        client.seatType.update({
+      });
+
+      if (!event || event.startTime <= new Date() || adminId !== adminId) {
+        console.log(event, event?.startTime, new Date(), adminId);
+        res.status(404).json({
+          message: "Event not found or Event already started",
+        });
+        return;
+      }
+
+      const currentSeats = await client.seatType.findMany({
+        where: {
+          eventId: eventId,
+        },
+      });
+
+      const newSeats = data.seats.filter((x) => !x.id);
+      const updateSeats = data.seats.filter(
+        (x) => x.id && currentSeats.find((y) => y.id === x.id)
+      );
+      const deletedSeats = currentSeats.filter(
+        (x) => !data.seats.find((y) => y.id === x.id)
+      );
+
+      await client.$transaction([
+        client.seatType.deleteMany({
           where: {
-            id: x.id,
+            id: {
+              in: deletedSeats.map((x) => x.id),
+            },
           },
-          data: {
+        }),
+        client.seatType.createMany({
+          data: newSeats.map((x) => ({
             name: x.name,
             description: x.description,
             price: x.price,
             capacity: x.capacity,
-          },
-        })
-      ),
-    ]);
-  } catch (error) {
-    res.status(500).json({
-      message: "Could not update seats",
-    });
+            eventId,
+          })),
+        }),
+        ...updateSeats.map((x) =>
+          client.seatType.update({
+            where: {
+              id: x.id,
+            },
+            data: {
+              name: x.name,
+              description: x.description,
+              price: x.price,
+              capacity: x.capacity,
+            },
+          })
+        ),
+      ]);
+
+      res.json({
+        message: "seats updated",
+      });
+      return;
+    } catch (error) {
+      res.status(500).json({
+        message: "Could not update seats",
+      });
+      return;
+    }
   }
-  res.json({
-    message: "seats updates",
-  });
-});
+);
 export default router;

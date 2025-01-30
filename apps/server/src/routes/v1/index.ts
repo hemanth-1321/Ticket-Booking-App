@@ -7,6 +7,7 @@ import testRouter from "../test/index";
 import bookingRouter from "./user/booking";
 import transactionRouter from "./user/transaction";
 import superAdminRouter from "../superAdmin/events";
+import superAdminAuth from "../superAdmin/index";
 const router: Router = Router();
 
 router.use("/user/bookings", bookingRouter);
@@ -16,6 +17,7 @@ router.use("/admin", adminRouter);
 router.use("/admin/event", adminEventRouter);
 router.use("/admin/location", adminLocationRouter);
 router.use("/superAdmin", superAdminRouter);
+router.use("/superAdmin/auth", superAdminAuth);
 if (process.env.NODE_ENV !== "production") {
   router.use("/test", testRouter);
 }
