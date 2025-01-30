@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "SeatType" ADD COLUMN     "locked" INTEGER NOT NULL DEFAULT 0;

@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Event" ADD COLUMN     "timeoutIns" INTEGER NOT NULL DEFAULT 600,
+ALTER COLUMN "LocationId" DROP DEFAULT;
