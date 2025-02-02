@@ -58,7 +58,7 @@ router.post("/signin/verify", async (req, res) => {
   const otp = req.body.otp;
   try {
     if (
-      process.env.NODE_ENV !== "production" &&
+      process.env.NODE_ENV === "production" &&
       !verifyToken(number, "ADMIN_AUTH", otp)
     ) {
       res.json({

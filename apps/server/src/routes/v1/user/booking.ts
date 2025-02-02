@@ -4,8 +4,7 @@ import { client } from "@repo/db/client";
 import jwt from "jsonwebtoken";
 import { userMiddleware } from "../../../middleware/user";
 import { CreateBookingSchema } from "../../../types";
-import { getRedisKey, incrCount } from "@repo/reddis/client";
-import { date } from "zod";
+import { Queue } from "bullmq";
 const router: Router = Router();
 
 router.get("/", userMiddleware, async (req, res) => {
@@ -20,7 +19,9 @@ router.get("/", userMiddleware, async (req, res) => {
 });
 
 router.post("/", userMiddleware, async (req, res) => {
+  const bookingQueue = new Queue("bookingqueue");
   const { data, success } = CreateBookingSchema.safeParse(req.body);
+  console.log(data?.eventId);
   const userId = req.userId;
   if (!success) {
     res.status(400).json({
@@ -40,32 +41,18 @@ router.post("/", userMiddleware, async (req, res) => {
       id: data.eventId,
     },
   });
+  console.log(event);
 
-  if (!event || event.startTime > new Date()) {
+  if (!event || event.startTime < new Date()) {
     res.status(404).json({
       message: "event not found or already started",
     });
     return;
   }
   try {
-    const counter = await incrCount(getRedisKey(`booking-${data.eventId}`));
-    const booking = await client.booking.create({
-      data: {
-        eventId: data.eventId,
-        userId: userId,
-        status: "Pending",
-        sequenceNumber: counter,
-        seats: {
-          create: data.seats.map((seat) => ({
-            seatTypeId: seat.id,
-            qr: "",
-          })),
-        },
-        expiry: new Date(new Date().getTime() + event.timeoutIns * 1000),
-      },
-    });
+    await bookingQueue.add("createBooking", { data, userId });
     res.json({
-      id: booking.id,
+      message: "Bookimg in proceess",
     });
   } catch (error) {
     res.status(500).json({
