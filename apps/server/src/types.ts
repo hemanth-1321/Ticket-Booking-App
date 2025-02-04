@@ -63,3 +63,9 @@ export const RazorpayWebhookSchema = z.object({
   }),
   webhookSecret: z.string(),
 });
+
+export const VerifyPayments = z.object({
+  orderId: z.string(),
+  paymentId: z.string(),
+  signature: z.string(),
+});

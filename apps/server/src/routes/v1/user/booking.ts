@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { userMiddleware } from "../../../middleware/user";
 import { CreateBookingSchema } from "../../../types";
 import { Queue } from "bullmq";
+import { VerifyPayments } from "../../../utils/paymentUtils";
 const router: Router = Router();
 
 router.get("/", userMiddleware, async (req, res) => {
@@ -21,7 +22,9 @@ router.get("/", userMiddleware, async (req, res) => {
 router.post("/", userMiddleware, async (req, res) => {
   const bookingQueue = new Queue("bookingqueue");
   const { data, success } = CreateBookingSchema.safeParse(req.body);
-  console.log(data?.eventId);
+  const { orderId, payementId, signature, eventId } = req.body;
+  console.log(orderId, payementId, signature, eventId);
+
   const userId = req.userId;
   if (!success) {
     res.status(400).json({
@@ -49,15 +52,22 @@ router.post("/", userMiddleware, async (req, res) => {
     });
     return;
   }
+
+  const isValid = VerifyPayments(orderId, payementId, signature);
+  if (!isValid) {
+    res.status(401).json({
+      message: "Payment verification Failed",
+    });
+  }
   try {
-    await bookingQueue.add("createBooking", { data, userId });
+    await bookingQueue.add("createBooking", { data, userId, eventId });
     res.json({
-      message: "Bookimg in proceess",
+      message: "payment sucessfull, Booking in proceess",
+      payementId,
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Could not create a bookimg",
-    });
+    console.error("Booking queue error:", error);
+    res.status(500).json({ message: "Payment successful, but booking failed" });
   }
 });
 
