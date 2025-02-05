@@ -27,7 +27,7 @@ const bookingWorker = new Worker(
       data: {
         eventId: eventId,
         userId: userId,
-        status: "Pending",
+        status: "Confirmed",
         paymentId: paymentId,
         sequenceNumber: counter,
         seats: {

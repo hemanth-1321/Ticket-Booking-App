@@ -6,6 +6,7 @@ import { userMiddleware } from "../../../middleware/user";
 import { CreateBookingSchema } from "../../../types";
 import { Queue } from "bullmq";
 import { VerifyPayments } from "../../../utils/paymentUtils";
+import { bookingLimter } from "../../../utils/rateLimit";
 const router: Router = Router();
 
 router.get("/", userMiddleware, async (req, res) => {
@@ -19,13 +20,13 @@ router.get("/", userMiddleware, async (req, res) => {
   });
 });
 
-router.post("/", async (req, res) => {
+router.post("/", userMiddleware, bookingLimter, async (req, res) => {
   const bookingQueue = new Queue("bookingqueue");
   const { data, success } = CreateBookingSchema.safeParse(req.body);
   const { orderId, paymentId, signature, eventId } = req.body;
   console.log(orderId, paymentId, signature, eventId);
 
-  const userId = "185449f2-9177-4077-b632-a37cf5ecf91d";
+  const userId = req.userId;
   if (!success) {
     res.status(400).json({
       message: "Invalid data",
