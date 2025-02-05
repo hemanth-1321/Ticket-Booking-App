@@ -8,10 +8,13 @@ import bookingRouter from "./user/booking";
 import transactionRouter from "./user/transaction";
 import superAdminRouter from "../superAdmin/events";
 import superAdminAuth from "../superAdmin/index";
+import paymentsRouter from "./razorpay/index";
 const router: Router = Router();
 
 router.use("/user/bookings", bookingRouter);
 router.use("/user/transactions", transactionRouter);
+router.use("/user/payments", paymentsRouter);
+
 router.use("/user", userRouter);
 router.use("/admin", adminRouter);
 router.use("/admin/event", adminEventRouter);
