@@ -10,8 +10,7 @@
   "devDependencies": {
     "@repo/common": "workspace:*",
     "@repo/db": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "@types/cors": "^2.8.17"
+    "@repo/typescript-config": "workspace:*"
   },
   "keywords": [],
   "author": "",
@@ -25,7 +24,6 @@
     "@types/jsonwebtoken": "^9.0.7",
     "authenticator": "^1.1.5",
     "bullmq": "^5.39.2",
-    "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
