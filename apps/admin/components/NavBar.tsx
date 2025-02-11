@@ -12,12 +12,10 @@ import ThemeToggle from "./ThemeToggle";
 
 export const NavBar = () => {
   return (
-    <div className="flex justify-between m-4 p-4">
-      <div>Latent</div>
+    <div className="flex justify-between m-6 p-6 h-16 shadow-md bg-white dark:bg-[#00040e]">
+      <div className="text-lg font-semibold">Latent</div>
 
       <div className="flex gap-3">
-        <ThemeToggle />
-
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem className="space-x-6">
@@ -33,6 +31,7 @@ export const NavBar = () => {
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
+        <ThemeToggle />
       </div>
     </div>
   );
