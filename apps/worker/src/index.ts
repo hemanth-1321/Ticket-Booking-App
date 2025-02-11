@@ -7,9 +7,8 @@ const bullmqConnection = new IORedis({ maxRetriesPerRequest: null });
 const bookingWorker = new Worker(
   "bookingqueue",
   async (job) => {
-    const { data, userId, eventId, paymentId } = job.data;
-    console.log("Job data received:", { data, userId, paymentId });
-    console.log(typeof paymentId);
+    const { data, userId, eventId } = job.data;
+    console.log(data, userId);
 
     const event = await dbClient.event.findUnique({
       where: {
@@ -27,8 +26,7 @@ const bookingWorker = new Worker(
       data: {
         eventId: eventId,
         userId: userId,
-        status: "Confirmed",
-        paymentId: paymentId,
+        status: "Pending",
         sequenceNumber: counter,
         seats: {
           create: data.seats.map((seat: any) => ({
