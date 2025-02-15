@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useAuthStore } from "@/app/store/useAuthStore";
 import {
   Dialog,
   DialogContent,
@@ -23,7 +25,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-
+import axios from "axios";
+import { BACKEND_URL } from "@/lib/config";
 const formSchema = z.object({
   username: z.string().min(2, {
     message: "Username must be at least 2 characters.",
@@ -36,14 +39,32 @@ const formSchema = z.object({
 
 export function LoginForm() {
   const router = useRouter();
+  const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const setNumber = useAuthStore((state) => state.setNumber);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      username: "",
+      number: "",
+    },
   });
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
-    console.log(data);
-    setIsDialogOpen(true);
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    const response = await axios.post(`${BACKEND_URL}/admin/signin`, {
+      name: data.username,
+      number: data.number,
+    });
+    if (response.status === 200) {
+      setIsDialogOpen(true);
+      setNumber(data.number);
+    } else {
+      toast({
+        title: "Error",
+        description: "Invalid username or phone number",
+      });
+    }
   };
   return (
     <div className="flex items-center justify-center mt-44 md:mt-16 lg:mt-16">

@@ -1,11 +1,11 @@
 import express, { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
-import cookieParser from "cookie-parser";
 dotenv.config();
 import v1Router from "./routes/v1";
 const app = express();
+import cors from "cors";
+app.use(cors());
 app.use(express.json());
-app.use(cookieParser());
 declare global {
   namespace Express {
     interface Request {

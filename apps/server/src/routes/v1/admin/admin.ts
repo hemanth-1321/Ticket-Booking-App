@@ -39,7 +39,7 @@ router.post("/signin", async (req, res) => {
       }
     }
 
-    res.json({
+    res.status(200).json({
       message: "otp sent",
       admin,
     });
@@ -61,7 +61,7 @@ router.post("/signin/verify", async (req, res) => {
       process.env.NODE_ENV === "production" &&
       !verifyToken(number, "ADMIN_AUTH", otp)
     ) {
-      res.json({
+      res.status(401).json({
         message: "Invalid token",
       });
       return;
@@ -81,8 +81,9 @@ router.post("/signin/verify", async (req, res) => {
       },
       ADMIN_JWT_PASSWORD
     );
+    console.log(token);
 
-    res.json({
+    res.status(200).json({
       token,
     });
   } catch (error) {
