@@ -4,8 +4,34 @@ import { client } from "@repo/db/client";
 import { adminMiddleware } from "../../../middleware/admin";
 import { CreateLocationSchema } from "../../../types";
 import { superAdminMiddleware } from "../../../middleware/superAdmin";
+import { getPresignedUrl } from "../../../utils/S3";
 
 const router: Router = Router();
+
+router.post("/presigned-url", async (req, res) => {
+  console.log(req.body);
+  const { fileName, fileType } = req.body;
+  console.log(fileName, fileType);
+  if (!fileName || !fileType) {
+    res.status(400).json({
+      message: "Missing FileName or FileType",
+    });
+    return;
+  }
+  try {
+    const { uploadURL, filePath } = await getPresignedUrl(
+      fileName as string,
+      fileType as string,
+      "locations"
+    );
+    res.status(200).json({ uploadURL, filePath });
+  } catch (error) {
+    console.error("error uploading image", error);
+    res.status(500).json({
+      message: "Error uploading Image",
+    });
+  }
+});
 
 router.post("/", adminMiddleware, async (req, res) => {
   const { data, success, error } = CreateLocationSchema.safeParse(req.body);
@@ -33,7 +59,7 @@ router.post("/", adminMiddleware, async (req, res) => {
       data: {
         name: data.name,
         description: data.description,
-        imageUrl: data.imageUrl,
+        imageUrl: `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${data.imageUrl}`,
       },
     });
 

@@ -19,6 +19,7 @@ export function InputOTPControlled() {
   const [value, setValue] = React.useState("");
   const router = useRouter();
   const number = useAuthStore((state) => state.number);
+  console.log(number);
   const { login } = useAuth();
   const handleOnSubmit = async () => {
     if (!number) {

@@ -10,7 +10,7 @@ const router: Router = Router();
 router.post("/signin", async (req, res) => {
   const { number, name } = req.body;
 
-  const otp = generateToken(number + "ADMIN_AUTH");
+  const otp = getToken(number, "ADMIN_AUTH");
 
   try {
     const admin = await client.admin.upsert({
@@ -57,6 +57,8 @@ router.post("/signin/verify", async (req, res) => {
 
   const otp = req.body.otp;
   try {
+    const expectedOtp = getToken(number, "ADMIN_AUTH");
+    console.log(`Expected OTP: ${expectedOtp}, Received OTP: ${otp}`);
     if (
       process.env.NODE_ENV === "production" &&
       !verifyToken(number, "ADMIN_AUTH", otp)

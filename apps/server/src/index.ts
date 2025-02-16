@@ -1,11 +1,12 @@
 import express, { Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 dotenv.config();
 import v1Router from "./routes/v1";
 const app = express();
-import cors from "cors";
-app.use(cors());
 app.use(express.json());
+app.use(cors());
+
 declare global {
   namespace Express {
     interface Request {
@@ -21,4 +22,6 @@ app.use("/api/v1", v1Router);
 //   });
 // });
 
-app.listen(process.env.PORT || 8080);
+app.listen(process.env.PORT || 8080, () => {
+  console.log("server is up");
+});
