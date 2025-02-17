@@ -35,6 +35,7 @@ const page = () => {
       );
 
       const { uploadURL, filePath } = data;
+      console.log("filePath", filePath);
 
       // 2️⃣ Upload File to S3
       await axios.put(uploadURL, file, {
@@ -43,6 +44,7 @@ const page = () => {
 
       // 3️⃣ Store Final Image URL
       const finalUrl = `https://${process.env.NEXT_PUBLIC_S3_BUCKET}.s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${filePath}`;
+      console.log(finalUrl);
       setImageUrl(finalUrl);
     } catch (error) {
       console.error("Upload failed:", error);

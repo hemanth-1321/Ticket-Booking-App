@@ -4,7 +4,7 @@ import { client } from "@repo/db/client";
 import { adminMiddleware } from "../../../middleware/admin";
 import { CreateLocationSchema } from "../../../types";
 import { superAdminMiddleware } from "../../../middleware/superAdmin";
-import { getPresignedUrl } from "../../../utils/S3";
+import { getPresignedGetUrl, getPresignedUrl } from "../../../utils/S3";
 
 const router: Router = Router();
 
@@ -24,6 +24,7 @@ router.post("/presigned-url", async (req, res) => {
       fileType as string,
       "locations"
     );
+    console.log(uploadURL, filePath);
     res.status(200).json({ uploadURL, filePath });
   } catch (error) {
     console.error("error uploading image", error);
@@ -59,7 +60,7 @@ router.post("/", adminMiddleware, async (req, res) => {
       data: {
         name: data.name,
         description: data.description,
-        imageUrl: `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${data.imageUrl}`,
+        imageUrl: data.imageUrl,
       },
     });
 
@@ -74,11 +75,65 @@ router.post("/", adminMiddleware, async (req, res) => {
 });
 
 router.get("/locations", adminMiddleware, async (req, res) => {
-  const locations = await client.location.findMany();
+  try {
+    const locations = await client.location.findMany();
+    const formatedlocations = await Promise.all(
+      locations.map(async (location) => {
+        const imageUrl = await getPresignedGetUrl(location.imageUrl);
+        return {
+          id: location.id,
+          name: location.name,
+          description: location.description,
+          imageUrl,
+        };
+      })
+    );
 
-  res.json({
-    locations,
-  });
+    res.status(200).json({
+      formatedlocations,
+    });
+  } catch (error) {
+    console.error("Error fetching Locations", error);
+    res.status(500).json({
+      message: "Could not fetch locations",
+    });
+  }
+});
+
+router.get("/location/:id", adminMiddleware, async (req, res) => {
+  const { id } = req.params;
+  if (!id) {
+    res.status(400).json({
+      message: "Location Id not found",
+    });
+    return;
+  }
+
+  try {
+    const location = await client.location.findUnique({
+      where: {
+        id: id,
+      },
+    });
+    if (!location) {
+      res.status(404).json({
+        message: "Location not found",
+      });
+    }
+
+    const imageUrl = await getPresignedGetUrl(location?.imageUrl ?? "");
+    res.status(200).json({
+      id: location?.id,
+      name: location?.name,
+      description: location?.description,
+      imageUrl: imageUrl,
+    });
+  } catch (error) {
+    console.error("Error Fetching location", error);
+    res.status(500).json({
+      message: "Error Fetching location",
+    });
+  }
 });
 
 export default router;
