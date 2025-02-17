@@ -84,3 +84,7 @@ body {
 .bg-gradient-text{
   @apply bg-gradient-to-r from-[#d0b759] to-[#d0b759]  bg-clip-text text-transparent
 }
+
+.dark{
+  @apply dark:bg-[#171717] 
+}

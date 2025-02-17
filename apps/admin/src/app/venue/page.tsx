@@ -5,14 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { BACKEND_URL } from "@/lib/config";
-
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useRouter } from "next/navigation";
+import { toast } from "@/hooks/use-toast";
 const page = () => {
   const [file, setFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string>("");
   const [loading, setLoading] = useState(false);
-
+  const [filePath, setFilePath] = useState<string>("");
+  const [name, setName] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const router = useRouter();
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("file ed");
     if (event.target.files && event.target.files.length > 0) {
       setFile(event.target.files[0]);
     }
@@ -35,6 +40,7 @@ const page = () => {
       );
 
       const { uploadURL, filePath } = data;
+      setFilePath(filePath);
       console.log("filePath", filePath);
 
       // 2️⃣ Upload File to S3
@@ -42,10 +48,36 @@ const page = () => {
         headers: { "Content-Type": file.type },
       });
 
-      // 3️⃣ Store Final Image URL
       const finalUrl = `https://${process.env.NEXT_PUBLIC_S3_BUCKET}.s3.${process.env.NEXT_PUBLIC_AWS_REGION}.amazonaws.com/${filePath}`;
-      console.log(finalUrl);
       setImageUrl(finalUrl);
+
+      //create location End-point
+      const token = localStorage.getItem("jwtToken");
+
+      if (!token) {
+        console.error("No authentication token found.");
+        return;
+      }
+      const res = await axios.post(
+        `${BACKEND_URL}/admin/location`,
+        {
+          name,
+          description,
+          imageUrl: filePath,
+        },
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      if (res.status == 200 || 201) {
+        toast({
+          title: `${name} Added successfully`,
+          description: "The location was added successfully to the database.",
+        });
+        router.push("/");
+      }
     } catch (error) {
       console.error("Upload failed:", error);
     }
@@ -53,15 +85,49 @@ const page = () => {
   };
 
   return (
-    <Card className="p-6 space-y-4 w-full max-w-md mx-auto">
-      <Input type="file" onChange={handleFileChange} />
-      <Button onClick={handleUpload} disabled={loading || !file}>
-        {loading ? "Uploading..." : "Upload to S3"}
-      </Button>
-      {imageUrl && (
-        <img src={imageUrl} alt="Uploaded File" className="rounded-xl mt-4" />
-      )}
-    </Card>
+    <div className="mt-36 sm:mt-0">
+      <Card className="p-8 space-y-6 w-full max-w-lg mx-auto bg-white dark:bg-[#171717] rounded-xl shadow-lg border border-gray-200">
+        <div className="space-y-4">
+          {/* Name Field */}
+          <div className="space-y-1">
+            <Label className="text-lg font-semibold">Name</Label>
+            <Input
+              type="text"
+              value={name}
+              placeholder="Ex:DY Patil Stadium, Mumbai"
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Description Field */}
+          <div className="space-y-1">
+            <Label className="text-lg font-semibold">Description</Label>
+            <Textarea
+              value={description}
+              placeholder="Ex: Narendra Modi Stadium, Ahmedabad. Accommodations: Hotels in Mumbai, Hotels in Ahmedabad"
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full h-28 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* File Upload */}
+          <div className="space-y-1">
+            <Label className="text-lg font-semibold">Upload Image</Label>
+            <Input
+              type="file"
+              onChange={handleFileChange}
+              className="w-full py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Upload Button */}
+          <Button onClick={handleUpload} className="w-full button">
+            {loading ? "Uploading..." : "Upload"}
+          </Button>
+        </div>
+      </Card>
+    </div>
   );
 };
 

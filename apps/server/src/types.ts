@@ -19,7 +19,7 @@ export const CreateEventSchema = z.object({
 export const CreateLocationSchema = z.object({
   name: z.string(),
   description: z.string(),
-  imageUrl: z.string().url(),
+  imageUrl: z.string(),
 });
 
 export const UpdateEventSchema = z.object({
