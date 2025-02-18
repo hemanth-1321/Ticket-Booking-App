@@ -88,3 +88,7 @@ body {
 .dark{
   @apply dark:bg-[#171717] 
 }
+
+.light{
+  @apply bg-gray-300
+}

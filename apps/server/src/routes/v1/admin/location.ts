@@ -136,4 +136,23 @@ router.get("/location/:id", adminMiddleware, async (req, res) => {
   }
 });
 
+router.delete("/:id", adminMiddleware, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const location = await client.location.delete({
+      where: {
+        id: id,
+      },
+    });
+    res.status(200).json({
+      message: `${location.name} deleted sucessfully`,
+    });
+  } catch (error) {
+    console.error("Error deleting the Location", error);
+    res.status(500).json({
+      message: "Error Deleting the location",
+    });
+  }
+});
+
 export default router;

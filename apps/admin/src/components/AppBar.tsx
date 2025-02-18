@@ -12,7 +12,7 @@ export const AppBar = () => {
   const [isOpen, setIsOpen] = useState(false); // Mobile menu state
   const [loading, setLoading] = useState(false);
   return (
-    <div className="flex justify-between items-center m-4 p-4 md:m-6 md:p-6 lg:m-6 lg:p-6 h-16 shadow-md bg-white dark:bg-[#0a0a0a]">
+    <div className="flex justify-between items-center m-4 p-4 md:m-6 md:p-6 lg:m-6 lg:p-6 h-16 shadow-md bg-gray-300 dark:bg-[#0a0a0a] rounded-lg">
       {/* Logo */}
       <div className="flex items-center">
         <Link href="/">
