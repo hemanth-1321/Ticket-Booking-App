@@ -13,11 +13,8 @@ import { Locations } from "@/components/Locations";
 
 const page = () => {
   return (
-    <div className="grid grid-cols-2 w-full">
-      <div>
-        <Locations />
-      </div>
-      <div>
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 w-full">
+      <div className="flex flex-col items-center p-2 md:mt-8">
         <Dialog>
           <DialogTrigger className="button">Add a Venue</DialogTrigger>
           <DialogContent className="flex flex-col  items-center justify-center sm:max-w-md w-[90%] h-[60%] md:h-[90%] lg:h-[95%]">
@@ -30,6 +27,9 @@ const page = () => {
             </div>
           </DialogContent>
         </Dialog>
+      </div>
+      <div className="col-span-3 p-4">
+        <Locations />
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ import axios from "axios";
 import { BACKEND_URL } from "@/lib/config";
 import { toast } from "@/hooks/use-toast";
 import Image from "next/image";
+import { Button } from "./ui/button";
 
 interface Location {
   id: string;
@@ -25,6 +26,30 @@ export const Locations = () => {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState("");
 
+  const handleDeleteLocation = async (id: string) => {
+    setLoading(true);
+    try {
+      const DeleteLocation = await axios.delete(
+        `${BACKEND_URL}/admin/location/${id}`,
+        {
+          headers: {
+            Authorization: token,
+          },
+        }
+      );
+      if (DeleteLocation.status == 200) {
+        toast({
+          title: ` deleted sucessfully`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: `Could not deleted `,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
     const storedToken = localStorage.getItem("jwtToken");
     if (!storedToken) {
@@ -86,6 +111,12 @@ export const Locations = () => {
               <CardDescription className="mt-4 text-black dark:text-gray-300 text-sm">
                 {location.description}
               </CardDescription>
+              <Button
+                onClick={() => handleDeleteLocation(location.id)}
+                className="mt-2 button w-20"
+              >
+                {loading ? "Deleting" : "Delete"}
+              </Button>
             </CardContent>
           </Card>
         ))
