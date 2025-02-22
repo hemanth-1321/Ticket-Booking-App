@@ -8,12 +8,68 @@ import {
   UpdateSeatSchema,
 } from "../../../types";
 import { getEvent } from "../../../controllers/events";
+import { getPresignedUrl } from "../../../utils/S3";
 const router: Router = Router();
 
+router.post("/event/presigned-url", async (req, res) => {
+  console.log(req.body);
+  const { fileName, fileType } = req.body;
+  console.log(fileName, fileType);
+  if (!fileName || !fileType) {
+    res.status(400).json({
+      message: "Missing FileName or FileType",
+    });
+    return;
+  }
+  try {
+    const { uploadURL, filePath } = await getPresignedUrl(
+      fileName as string,
+      fileType as string,
+      "locations"
+    );
+    console.log(uploadURL, filePath);
+    res.status(200).json({ uploadURL, filePath });
+  } catch (error) {
+    console.error("error uploading image", error);
+    res.status(500).json({
+      message: "Error uploading Image",
+    });
+  }
+});
+
+router.post("/image-upload", adminMiddleware, async (req, res) => {
+  const { image_path } = req.body;
+  const id = req.userId;
+  if (!image_path) {
+    res.status(400).json({
+      message: "Image not found",
+    });
+    return;
+  }
+  try {
+    const uploadImage = await client.event.update({
+      where: {
+        adminId: id,
+      },
+      data: {
+        imageUrl: image_path,
+      },
+    });
+    res.status(201).json({
+      message: "Image uploaded SucessFully",
+    });
+  } catch (error) {
+    console.log("error uploading image ");
+    res.status(500).json({
+      message: "Error uploading image",
+    });
+  }
+});
 router.post("/", adminMiddleware, async (req, res) => {
   const { data, success, error } = CreateEventSchema.safeParse(req.body);
-  const adminId = req.userId;
+  console.log(req.body);
 
+  const adminId = req.userId;
   // console.log("Validation Success:", success);
   // console.log("Parsed Data:", data);
   // console.log("Validation Errors:", error);
@@ -31,24 +87,15 @@ router.post("/", adminMiddleware, async (req, res) => {
     });
     return;
   }
-
+  const startTimeISO = new Date(data.startTime);
   try {
     const event = await client.event.create({
       data: {
         name: data.name,
         description: data.description,
-        startTime: data.startTime,
-        LocationId: data.locationId,
-        banner: data.banner,
+        startTime: startTimeISO,
+        location: data.location,
         adminId,
-        SeatType: {
-          create: data.seats.map((seat) => ({
-            name: seat.name,
-            description: seat.description,
-            capacity: seat.capacity,
-            price: seat.price,
-          })),
-        },
       },
     });
     console.log("event", event);
@@ -100,7 +147,7 @@ router.put("/metadata/:eventId", adminMiddleware, async (req, res) => {
         name: data.name,
         description: data.description,
         startTime: data.startTime,
-        LocationId: data.location,
+        location: data.location,
         banner: data.banner,
         adminId,
         published: data.published,
@@ -194,17 +241,17 @@ router.put(
 
       const newSeats = data.seats.filter((x) => !x.id);
       const updateSeats = data.seats.filter(
-        (x) => x.id && currentSeats.find((y) => y.id === x.id)
+        (x) => x.id && currentSeats.find((y: any) => y.id === x.id)
       );
       const deletedSeats = currentSeats.filter(
-        (x) => !data.seats.find((y) => y.id === x.id)
+        (x: any) => !data.seats.find((y) => y.id === x.id)
       );
 
       await client.$transaction([
         client.seatType.deleteMany({
           where: {
             id: {
-              in: deletedSeats.map((x) => x.id),
+              in: deletedSeats.map((x: any) => x.id),
             },
           },
         }),

@@ -39,7 +39,7 @@ router.put("/metadata/:eventId", superAdminMiddleware, async (req, res) => {
         name: data.name,
         description: data.description,
         startTime: data.startTime,
-        LocationId: data.location,
+        location: data.location,
         banner: data.banner,
         adminId,
         published: data.published,

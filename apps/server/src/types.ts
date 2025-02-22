@@ -3,17 +3,10 @@ import { z } from "zod";
 export const CreateEventSchema = z.object({
   name: z.string(),
   description: z.string(),
-  startTime: z.string(),
-  locationId: z.string(),
-  banner: z.string(),
-  seats: z.array(
-    z.object({
-      name: z.string(),
-      description: z.string(),
-      price: z.number(),
-      capacity: z.number(),
-    })
-  ),
+  startTime: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date format",
+  }),
+  location: z.string(),
 });
 
 export const CreateLocationSchema = z.object({
