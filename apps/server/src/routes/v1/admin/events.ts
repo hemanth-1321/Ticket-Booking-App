@@ -38,9 +38,9 @@ router.post("/presigned-url", async (req, res) => {
 });
 
 router.post("/image-upload", adminMiddleware, async (req, res) => {
-  const { imageUrl } = req.body;
+  const { image_Url } = req.body;
   const id = req.userId;
-  if (!imageUrl) {
+  if (!image_Url) {
     res.status(400).json({
       message: "Image not found",
     });
@@ -52,7 +52,7 @@ router.post("/image-upload", adminMiddleware, async (req, res) => {
         adminId: id,
       },
       data: {
-        imageUrl,
+        imageUrl: image_Url,
       },
     });
     res.status(201).json({
@@ -189,107 +189,4 @@ router.get("/:eventId", adminMiddleware, async (req, res) => {
   res.json({ event });
 });
 
-router.put(
-  "/seats/:eventId",
-  adminMiddleware,
-  async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { data, success } = UpdateSeatSchema.safeParse(req.body);
-      const adminId = req.userId;
-      const eventId = req.params.eventId ?? "";
-
-      if (!success) {
-        res.status(400).json({
-          message: "Invalid data",
-        });
-        return;
-      }
-
-      if (!adminId) {
-        res.status(402).json({
-          message: "Unauthorized",
-        });
-        return;
-      }
-
-      if (!eventId) {
-        res.status(400).json({
-          message: "Invalid data",
-        });
-        return;
-      }
-
-      const event = await client.event.findUnique({
-        where: {
-          id: eventId,
-          adminId,
-        },
-      });
-
-      if (!event || event.startTime <= new Date() || adminId !== adminId) {
-        console.log(event, event?.startTime, new Date(), adminId);
-        res.status(404).json({
-          message: "Event not found or Event already started",
-        });
-        return;
-      }
-
-      const currentSeats = await client.seatType.findMany({
-        where: {
-          eventId: eventId,
-        },
-      });
-
-      const newSeats = data.seats.filter((x) => !x.id);
-      const updateSeats = data.seats.filter(
-        (x) => x.id && currentSeats.find((y: any) => y.id === x.id)
-      );
-      const deletedSeats = currentSeats.filter(
-        (x: any) => !data.seats.find((y) => y.id === x.id)
-      );
-
-      await client.$transaction([
-        client.seatType.deleteMany({
-          where: {
-            id: {
-              in: deletedSeats.map((x: any) => x.id),
-            },
-          },
-        }),
-        client.seatType.createMany({
-          data: newSeats.map((x) => ({
-            name: x.name,
-            description: x.description,
-            price: x.price,
-            capacity: x.capacity,
-            eventId,
-          })),
-        }),
-        ...updateSeats.map((x) =>
-          client.seatType.update({
-            where: {
-              id: x.id,
-            },
-            data: {
-              name: x.name,
-              description: x.description,
-              price: x.price,
-              capacity: x.capacity,
-            },
-          })
-        ),
-      ]);
-
-      res.json({
-        message: "seats updated",
-      });
-      return;
-    } catch (error) {
-      res.status(500).json({
-        message: "Could not update seats",
-      });
-      return;
-    }
-  }
-);
 export default router;

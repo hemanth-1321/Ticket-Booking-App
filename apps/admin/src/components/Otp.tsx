@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { BACKEND_URL } from "@/lib/config";
 import { useToast } from "@/hooks/use-toast";
-import { useAuthStore } from "@/app/store/useAuthStore";
+import { useAuthStore } from "@/store/useAuthStore";
 export function InputOTPControlled() {
   const { toast } = useToast();
   const [value, setValue] = React.useState("");

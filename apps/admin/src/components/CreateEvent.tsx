@@ -10,9 +10,10 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { BACKEND_URL } from "@/lib/config";
 import { toast } from "@/hooks/use-toast";
-import { title } from "process";
-
+import { useEventStore } from "@/store/useEventStore";
 export const CreateEvent = () => {
+  const { id, eventName, eventDescription, eventStartTime, setEventDetails } =
+    useEventStore();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [startTime, setStartTime] = useState("");
@@ -31,7 +32,7 @@ export const CreateEvent = () => {
   const handleOnSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = axios.post(
+      const response = await axios.post(
         `${BACKEND_URL}/admin/event`,
         {
           name,
@@ -46,12 +47,18 @@ export const CreateEvent = () => {
         }
       );
 
-      if ((await response).status == 201) {
+      if (response.status == 201) {
+        setEventDetails({
+          id: response.data.event.id,
+          eventName: response.data.event.name,
+        });
+
+        console.log("Event ID stored in Zustand:", response.data.event.id);
         toast({
           title: "Event created successfully",
           description: "Add the Event Banner Next",
         });
-        router.push("/eventBanner");
+        router.push("/seatcategory");
       }
     } catch (error) {
       console.error("error creating the event", error);

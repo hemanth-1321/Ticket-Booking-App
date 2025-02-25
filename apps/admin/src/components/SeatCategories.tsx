@@ -4,7 +4,11 @@ import { PlusCircle, MinusCircle, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
+import { useEventStore } from "@/store/useEventStore";
+import axios from "axios";
+import { BACKEND_URL } from "@/lib/config";
+import { toast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 interface Seat {
   name: string;
   description: string;
@@ -13,11 +17,13 @@ interface Seat {
 }
 
 export const SeatCategories = () => {
+  const router = useRouter();
+  const { id } = useEventStore();
+  console.log(id);
   const [seats, setSeats] = useState<Seat[]>([]);
-
-  // Ensure seats state initializes only on the client
   useEffect(() => {
     setSeats([{ name: "", description: "", price: "", capacity: "" }]);
+    console.log("id", id);
   }, []);
 
   const addSeat = () => {
@@ -44,8 +50,37 @@ export const SeatCategories = () => {
     console.error("No authentication token found.");
     return;
   }
-  const uploadSeats = () => {
+  const uploadSeats = async () => {
     console.log("Uploaded Seats:", seats);
+    const formattedSeats = {
+      seats: seats.map((seat) => ({
+        name: seat.name,
+        description: seat.description,
+        price: Number(seat.price),
+        capacity: Number(seat.capacity),
+      })),
+    };
+    const response = await axios.put(
+      `${BACKEND_URL}/admin/seats/${id}`,
+      formattedSeats,
+      {
+        headers: {
+          Authorization: token,
+        },
+      }
+    );
+
+    if (response.status == 200) {
+      toast({
+        title: "Seats Added SuccessFully",
+      });
+      router.push("/");
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Seats couldnt be Added, Please try again",
+      });
+    }
   };
 
   return (

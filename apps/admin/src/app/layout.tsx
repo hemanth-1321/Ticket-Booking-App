@@ -4,7 +4,6 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AppBar } from "@/components/AppBar";
 import { Toaster } from "@/components/ui/toaster";
-import { RecoilContextProvider } from "../lib/RecoilContextProvider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -37,7 +36,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AppBar />
-          <RecoilContextProvider> {children}</RecoilContextProvider>
+          {children}
 
           <Toaster />
         </ThemeProvider>

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useAuthStore } from "@/app/store/useAuthStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import {
   Dialog,
   DialogContent,

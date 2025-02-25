@@ -9,6 +9,7 @@ router.put(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { data, success } = UpdateSeatSchema.safeParse(req.body);
+      console.log(req.body);
       const adminId = req.userId;
       const eventId = req.params.eventId ?? "";
 
@@ -111,7 +112,7 @@ router.put(
       });
       console.log("Updated Seats:", updatedSeats);
 
-      res.json({
+      res.status(200).json({
         message: "Seats updated successfully",
         seatAvailability: updatedSeats.map((seat) => ({
           id: seat.id,
