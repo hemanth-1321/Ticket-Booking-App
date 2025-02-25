@@ -38,7 +38,7 @@ model Event {
   description String
   banner      String?
   startTime   DateTime
-  adminId     String    @unique
+  adminId     String
   processed   Int       @default(0)
   admin       Admin     @relation(fields: [adminId], references: [id])
   bokings     Booking[]

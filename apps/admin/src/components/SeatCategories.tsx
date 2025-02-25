@@ -1,41 +1,51 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { PlusCircle, MinusCircle, Calendar, MapPin } from "lucide-react";
+import { PlusCircle, MinusCircle, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 
 interface Seat {
   name: string;
   description: string;
-  price: number;
-  capacity: number;
+  price: string;
+  capacity: string;
 }
 
-export const SeatCategories = ({
-  seats,
-  setSeats,
-}: {
-  seats: Seat[];
-  setSeats: (seats: Seat[]) => void;
-}) => {
+export const SeatCategories = () => {
+  const [seats, setSeats] = useState<Seat[]>([]);
+
+  // Ensure seats state initializes only on the client
+  useEffect(() => {
+    setSeats([{ name: "", description: "", price: "", capacity: "" }]);
+  }, []);
+
   const addSeat = () => {
-    setSeats([...seats, { name: "", description: "", price: 0, capacity: 0 }]);
+    setSeats((prev) => [
+      ...prev,
+      { name: "", description: "", price: "", capacity: "" },
+    ]);
   };
 
   const removeSeat = (index: number) => {
-    setSeats(seats.filter((_, i) => i !== index));
+    setSeats((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const updateSeat = (
-    index: number,
-    field: keyof Seat,
-    value: string | number
-  ) => {
-    const newSeats = [...seats];
-    newSeats[index] = { ...newSeats[index], [field]: value };
-    setSeats(newSeats);
+  const updateSeat = (index: number, field: keyof Seat, value: string) => {
+    setSeats((prev) => {
+      const newSeats = [...prev];
+      newSeats[index] = { ...newSeats[index], [field]: value };
+      return newSeats;
+    });
+  };
+
+  const token = localStorage.getItem("jwtToken");
+  if (!token) {
+    console.error("No authentication token found.");
+    return;
+  }
+  const uploadSeats = () => {
+    console.log("Uploaded Seats:", seats);
   };
 
   return (
@@ -44,7 +54,10 @@ export const SeatCategories = ({
         <h2 className="text-xl font-semibold text-primary">Seat Categories</h2>
         <div className="space-y-4">
           {seats.map((seat, index) => (
-            <div key={index} className="grid grid-cols-2 gap-4">
+            <div
+              key={index}
+              className="grid grid-cols-2 gap-4 border p-4 rounded-lg"
+            >
               <div>
                 <Label>Seat Type</Label>
                 <Input
@@ -59,12 +72,12 @@ export const SeatCategories = ({
               <div>
                 <Label>Number of Seats</Label>
                 <Input
-                  type="number"
+                  type="text"
                   className="mt-2"
-                  min="1"
+                  placeholder="Enter number of seats"
                   value={seat.capacity}
                   onChange={(e) =>
-                    updateSeat(index, "capacity", Number(e.target.value))
+                    updateSeat(index, "capacity", e.target.value)
                   }
                   required
                 />
@@ -85,13 +98,11 @@ export const SeatCategories = ({
               <div>
                 <Label>Price per Seat</Label>
                 <Input
-                  type="number"
+                  type="text"
                   className="mt-2"
-                  min="0"
+                  placeholder="Enter price"
                   value={seat.price}
-                  onChange={(e) =>
-                    updateSeat(index, "price", Number(e.target.value))
-                  }
+                  onChange={(e) => updateSeat(index, "price", e.target.value)}
                   required
                 />
               </div>
@@ -109,14 +120,14 @@ export const SeatCategories = ({
             </div>
           ))}
         </div>
-        <Button
-          type="button"
-          onClick={addSeat}
-          variant="outline"
-          className="mt-4"
-        >
-          <PlusCircle className="w-4 h-4 mr-2" /> Add Seat Category
-        </Button>
+        <div className="flex gap-4 mt-4">
+          <Button type="button" onClick={addSeat} variant="outline">
+            <PlusCircle className="w-4 h-4 mr-2" /> Add Seat Category
+          </Button>
+          <Button type="button" onClick={uploadSeats} variant="default">
+            <Upload className="w-4 h-4 mr-2" /> Upload
+          </Button>
+        </div>
       </div>
     </div>
   );

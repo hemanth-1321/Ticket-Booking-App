@@ -11,7 +11,7 @@ import { getEvent } from "../../../controllers/events";
 import { getPresignedUrl } from "../../../utils/S3";
 const router: Router = Router();
 
-router.post("/event/presigned-url", async (req, res) => {
+router.post("/presigned-url", async (req, res) => {
   console.log(req.body);
   const { fileName, fileType } = req.body;
   console.log(fileName, fileType);
@@ -25,7 +25,7 @@ router.post("/event/presigned-url", async (req, res) => {
     const { uploadURL, filePath } = await getPresignedUrl(
       fileName as string,
       fileType as string,
-      "locations"
+      "events"
     );
     console.log(uploadURL, filePath);
     res.status(200).json({ uploadURL, filePath });
@@ -38,25 +38,26 @@ router.post("/event/presigned-url", async (req, res) => {
 });
 
 router.post("/image-upload", adminMiddleware, async (req, res) => {
-  const { image_path } = req.body;
+  const { imageUrl } = req.body;
   const id = req.userId;
-  if (!image_path) {
+  if (!imageUrl) {
     res.status(400).json({
       message: "Image not found",
     });
     return;
   }
   try {
-    const uploadImage = await client.event.update({
+    const uploadImage = await client.event.updateMany({
       where: {
         adminId: id,
       },
       data: {
-        imageUrl: image_path,
+        imageUrl,
       },
     });
     res.status(201).json({
       message: "Image uploaded SucessFully",
+      uploadImage,
     });
   } catch (error) {
     console.log("error uploading image ");
